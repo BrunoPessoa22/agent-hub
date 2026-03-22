@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Sidebar } from '@/components/Sidebar';
-import { onboardingQuestions, matchSkills, skills } from '@/lib/skills';
+import { onboardingQuestions, matchSkills, fetchSkills } from '@/lib/skills';
 import { Skill } from '@/types';
 import {
   Compass,
@@ -31,13 +31,18 @@ export default function OnboardPage() {
     setAnswers(prev => ({ ...prev, [question.id]: value }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentQuestion < onboardingQuestions.length - 1) {
       setCurrentQuestion(prev => prev + 1);
     } else {
       // Run matching
-      const matched = matchSkills(answers);
-      setResults(matched.length > 0 ? matched : skills.slice(0, 3));
+      const matched = await matchSkills(answers);
+      if (matched.length > 0) {
+        setResults(matched);
+      } else {
+        const all = await fetchSkills();
+        setResults(all.slice(0, 3));
+      }
       setStep('results');
     }
   };

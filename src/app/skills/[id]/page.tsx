@@ -1,10 +1,11 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/Sidebar';
-import { getSkillById } from '@/lib/skills';
+import { fetchSkillBySlug, installSkill, rateSkill } from '@/lib/skills';
+import { Skill } from '@/types';
 import {
   ArrowLeft,
   Package,
@@ -14,11 +15,13 @@ import {
   Wrench,
   Star,
   Check,
-  ExternalLink,
   Download,
   User,
   Calendar,
   Tag,
+  Loader2,
+  CheckCircle,
+  MessageSquare,
 } from 'lucide-react';
 
 const scoreLabels: Record<string, { label: string; icon: typeof Shield }> = {
@@ -51,7 +54,45 @@ function ScoreBar({ score, label, icon: Icon }: { score: number; label: string; 
 export default function SkillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const skill = getSkillById(id);
+  const [skill, setSkill] = useState<Skill | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [installing, setInstalling] = useState(false);
+  const [installed, setInstalled] = useState(false);
+  const [ratingScore, setRatingScore] = useState(8);
+  const [ratingFeedback, setRatingFeedback] = useState('');
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+
+  useEffect(() => {
+    fetchSkillBySlug(id).then((data) => {
+      setSkill(data);
+      setLoading(false);
+    });
+  }, [id]);
+
+  const handleInstall = async () => {
+    if (!skill) return;
+    setInstalling(true);
+    const ok = await installSkill(skill.id);
+    setInstalling(false);
+    if (ok) setInstalled(true);
+  };
+
+  const handleRate = async () => {
+    if (!skill) return;
+    const ok = await rateSkill(skill.id, ratingScore, ratingFeedback);
+    if (ok) setRatingSubmitted(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a]">
+        <Sidebar />
+        <main className="ml-64 p-6 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 text-[#98F94F] animate-spin" />
+        </main>
+      </div>
+    );
+  }
 
   if (!skill) {
     return (
@@ -166,9 +207,23 @@ export default function SkillDetailPage({ params }: { params: Promise<{ id: stri
           <div className="space-y-6">
             {/* Install Button */}
             <div className="p-5 rounded-xl bg-[#111] border border-white/[0.08]">
-              <button className="w-full btn-primary py-3 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 mb-3">
-                <Download className="w-4 h-4" />
-                Install Skill
+              <button
+                onClick={handleInstall}
+                disabled={installing || installed}
+                className={`w-full py-3 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 mb-3 transition-all ${
+                  installed
+                    ? 'bg-[#98F94F]/20 text-[#98F94F] cursor-default'
+                    : 'btn-primary'
+                }`}
+              >
+                {installing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : installed ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                {installed ? 'Installed' : installing ? 'Installing...' : 'Install Skill'}
               </button>
               <p className="text-[10px] text-[#666] text-center">
                 Installs to your OpenClaw agent workspace
@@ -182,7 +237,7 @@ export default function SkillDetailPage({ params }: { params: Promise<{ id: stri
                   <Wrench className="w-4 h-4 text-[#98F94F]" />
                   Scorecard
                 </h3>
-                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${verdictColors[skill.scorecard.verdict]}`}>
+                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${verdictColors[skill.scorecard.verdict] || ''}`}>
                   {skill.scorecard.verdict}
                 </span>
               </div>
@@ -240,6 +295,47 @@ export default function SkillDetailPage({ params }: { params: Promise<{ id: stri
                   <span className="text-xs text-[#a1a1a1] capitalize">{skill.license}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Rating */}
+            <div className="p-5 rounded-xl bg-[#111] border border-white/[0.08]">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-[#98F94F]" />
+                Rate this skill
+              </h3>
+              {ratingSubmitted ? (
+                <div className="text-center py-3">
+                  <CheckCircle className="w-6 h-6 text-[#98F94F] mx-auto mb-2" />
+                  <p className="text-xs text-[#a1a1a1]">Thanks for your feedback</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-[#666] mb-1 block">Score: {ratingScore}/10</label>
+                    <input
+                      type="range"
+                      min={1}
+                      max={10}
+                      value={ratingScore}
+                      onChange={(e) => setRatingScore(Number(e.target.value))}
+                      className="w-full accent-[#98F94F]"
+                    />
+                  </div>
+                  <textarea
+                    placeholder="Optional feedback..."
+                    value={ratingFeedback}
+                    onChange={(e) => setRatingFeedback(e.target.value)}
+                    rows={2}
+                    className="input text-xs w-full resize-none"
+                  />
+                  <button
+                    onClick={handleRate}
+                    className="w-full py-2 rounded-lg text-xs font-medium bg-[#161616] text-[#a1a1a1] border border-white/[0.08] hover:border-[#98F94F]/30 hover:text-white transition-all"
+                  >
+                    Submit Rating
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
