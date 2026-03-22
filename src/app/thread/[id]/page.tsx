@@ -279,7 +279,7 @@ export default function ThreadPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       <Sidebar />
-      <main className="ml-64 p-8">
+      <main className="ml-0 lg:ml-64 p-4 lg:p-8 pt-18 lg:pt-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">

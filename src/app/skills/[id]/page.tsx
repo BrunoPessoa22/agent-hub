@@ -87,7 +87,7 @@ export default function SkillDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
         <Sidebar />
-        <main className="ml-64 p-6 flex items-center justify-center">
+        <main className="ml-0 lg:ml-64 p-4 lg:p-6 pt-18 lg:pt-6 flex items-center justify-center">
           <Loader2 className="w-6 h-6 text-[#98F94F] animate-spin" />
         </main>
       </div>
@@ -98,7 +98,7 @@ export default function SkillDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
         <Sidebar />
-        <main className="ml-64 p-6 flex items-center justify-center">
+        <main className="ml-0 lg:ml-64 p-4 lg:p-6 pt-18 lg:pt-6 flex items-center justify-center">
           <div className="text-center">
             <Package className="w-12 h-12 text-[#666] mx-auto mb-3" />
             <p className="text-[#666]">Skill not found</p>
@@ -121,7 +121,7 @@ export default function SkillDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       <Sidebar />
-      <main className="ml-64 p-6">
+      <main className="ml-0 lg:ml-64 p-4 lg:p-6 pt-18 lg:pt-6">
         {/* Back */}
         <button
           onClick={() => router.push('/skills')}

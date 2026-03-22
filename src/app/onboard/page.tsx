@@ -63,7 +63,7 @@ export default function OnboardPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       <Sidebar />
-      <main className="ml-64 p-6">
+      <main className="ml-0 lg:ml-64 p-4 lg:p-6 pt-18 lg:pt-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
