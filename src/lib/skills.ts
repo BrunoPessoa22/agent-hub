@@ -1,6 +1,12 @@
 import { Skill } from '@/types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.brunopessoa.com';
+const BASE = typeof window === 'undefined' ? 'https://agents.brunopessoa.com' : '';
+
+function url(path: string, params?: Record<string, string | undefined>) {
+  const u = new URL(`${BASE}/api/skills${path}`);
+  for (const [k, v] of Object.entries(params ?? {})) if (v) u.searchParams.set(k, v);
+  return u.toString();
+}
 
 // --- API Client ---
 
@@ -8,30 +14,27 @@ export async function fetchSkills(params?: {
   q?: string;
   category?: string;
 }): Promise<Skill[]> {
-  const url = new URL(`${API_BASE}/api/skills`);
-  if (params?.q) url.searchParams.set('q', params.q);
-  if (params?.category) url.searchParams.set('category', params.category);
-  const res = await fetch(url.toString());
+  const res = await fetch(url('', { q: params?.q, category: params?.category }), { cache: 'no-store' });
   if (!res.ok) return [];
   const data = await res.json();
   return data.map(normalizeSkill);
 }
 
 export async function fetchSkillBySlug(slug: string): Promise<Skill | null> {
-  const res = await fetch(`${API_BASE}/api/skills/${slug}`);
+  const res = await fetch(url(`/${slug}`), { cache: 'no-store' });
   if (!res.ok) return null;
   const data = await res.json();
   return normalizeSkill(data);
 }
 
 export async function fetchCategories(): Promise<string[]> {
-  const res = await fetch(`${API_BASE}/api/skills/categories`);
+  const res = await fetch(url('/categories'), { cache: 'no-store' });
   if (!res.ok) return [];
   return res.json();
 }
 
 export async function installSkill(slug: string, opts?: { agentId?: number; workspaceId?: string }): Promise<boolean> {
-  const res = await fetch(`${API_BASE}/api/skills/${slug}/install`, {
+  const res = await fetch(url(`/${slug}/install`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -43,7 +46,7 @@ export async function installSkill(slug: string, opts?: { agentId?: number; work
 }
 
 export async function rateSkill(slug: string, score: number, feedback: string): Promise<boolean> {
-  const res = await fetch(`${API_BASE}/api/skills/${slug}/rate`, {
+  const res = await fetch(url(`/${slug}/rate`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ score, feedback }),
